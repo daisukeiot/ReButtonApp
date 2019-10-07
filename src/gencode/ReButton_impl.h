@@ -74,18 +74,17 @@ long DeviceInfo_Property_GetTotalMemory();
 
 // Custom
 
-extern volatile int ReButton_Digital_Twin_Work_Flag;
+extern volatile int ReButton_Property_Pending_Flag;
+extern volatile int ReButton_Telemetry_Pending_Flag;
 
-
-
-#define ReButton_Twin_manufacture             (1<<0)
-#define Rebutton_Twin_model                   (1<<1)
-#define ReButton_Twin_swVersion               (1<<2)
-#define ReButton_Twin_osName                  (1<<3)
-#define ReButton_Twin_processorArchitecture   (1<<4)
-#define ReButton_Twin_processorManufacturer   (1<<5)
-#define ReButton_Twin_totalStorage            (1<<6)
-#define ReButton_Twin_totalMemory             (1<<7)
+#define ReButton_Property_manufacture             (1<<0)
+#define ReButton_Property_model                   (1<<1)
+#define ReButton_Property_swVersion               (1<<2)
+#define ReButton_Property_osName                  (1<<3)
+#define ReButton_Property_processorArchitecture   (1<<4)
+#define ReButton_Property_processorManufacturer   (1<<5)
+#define ReButton_Property_totalStorage            (1<<6)
+#define ReButton_Property_totalMemory             (1<<7)
 
 #define ReButton_Telemetry_ActionNum          (1<<16)
 #define ReButton_Telemetry_Message            (1<<17)
@@ -93,14 +92,14 @@ extern volatile int ReButton_Digital_Twin_Work_Flag;
 #define ReButton_Telemetry_temperature        (1<<19)
 #define ReButton_Telemetry_humidity           (1<<20)
 
-#define  ReButton_Twin_Flags ReButton_Twin_manufacture \
-                           | Rebutton_Twin_model \
-                           | ReButton_Twin_swVersion \
-                           | ReButton_Twin_osName \
-                           | ReButton_Twin_processorArchitecture \
-                           | ReButton_Twin_processorManufacturer \
-                           | ReButton_Twin_totalStorage \
-                           | ReButton_Twin_totalMemory
+#define  ReButton_Property_Flags ReButton_Property_manufacture \
+                           | ReButton_Property_model \
+                           | ReButton_Property_swVersion \
+                           | ReButton_Property_osName \
+                           | ReButton_Property_processorArchitecture \
+                           | ReButton_Property_processorManufacturer \
+                           | ReButton_Property_totalStorage \
+                           | ReButton_Property_totalMemory
 
 #define ReButton_Telemetry_Flags ReButton_Telemetry_ActionNum \
                                | ReButton_Telemetry_Message \

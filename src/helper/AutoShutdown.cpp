@@ -1,8 +1,8 @@
 #include <Arduino.h>
-#include "Config.h"
+#include "../Common.h"
 #include "AutoShutdown.h"
 
-#include "Thread.h"
+#include <Thread.h>
 #include <ReButton.h>
 
 static Thread AutoShutdownThread(osPriorityHigh);

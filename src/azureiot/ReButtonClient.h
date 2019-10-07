@@ -1,7 +1,8 @@
+#pragma once
+
 #include <Arduino.h>
 #include <ReButton.h>
-#include "AzureIotHub.h"
-#include "Config.h"
+#include <AzureIotHub.h>
 
 typedef void (*DeviceTwinUpdateCallback)(DEVICE_TWIN_UPDATE_STATE update_state, const unsigned char* payLoad, size_t size);
 
@@ -14,6 +15,9 @@ private:
 	bool _Connected;
 	bool _MessageSent;
 	bool _DeviceTwinReported;
+
+public:
+	bool _IsPnPEnabled;
 
 public:
 	ReButtonClient();

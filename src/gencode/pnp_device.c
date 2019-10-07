@@ -87,6 +87,28 @@ int pnp_device_initialize(const char* connectionString, const char* trustedCert)
     return 0;
 }
 
+void pnp_device_run()
+{
+    tickcounter_ms_t nowTick;
+    tickcounter_get_current_ms(tickcounter, &nowTick);
+
+    if (nowTick - lastTickSend >= DEFAULT_SEND_TELEMETRY_INTERVAL_MS)
+    {
+        LogInfo("Send telemetry data to IoT Hub");
+
+        BatteryInterface_Telemetry_SendAll();
+        TempHumidSensorInterface_Telemetry_SendAll();
+        //PushButtonInterface_Telemetry_SendAll();
+
+        tickcounter_get_current_ms(tickcounter, &lastTickSend);
+    }
+    else
+    {
+        // Just check data from IoT Hub
+        DigitalTwinClientHelper_Check();
+    }
+}
+
 void pnp_device_close()
 {
     if (interfaceClientHandles[DEVICEINFO_INDEX] != NULL)

@@ -1,0 +1,174 @@
+#include <Arduino.h>
+#include "../Common.h"
+#include "ActionSendMessage.h"
+
+#include <az3166-driver/EMW10xxInterface.h>
+#include <system/SystemWiFi.h>
+#include <system/SystemTime.h>
+#include <azure_c_shared_utility/platform.h>
+#include <IPAddress.h>
+#include <parson.h>
+
+#include <ReButton.h>
+#include "../gencode/pnp_device.h"
+#include "../helper/ReButtonWiFi.h"
+#include "../azureiot/ReButtonClient2.h"
+#include "../gencode/ReButton_impl.h"
+
+#define POLLING_INTERVAL	(100)
+
+#define LOOP_WAIT_TIME		(10)	// [msec.]
+
+static String MakeMessageJsonString(ACTION_TYPE action)
+{
+    String payload = "{";
+    payload += String("\"actionNum\":\"") + String(ActionToActionNum(action)) + String("\"");
+	payload += String(",\"message\":\"") + ActionToMessage(action) + String("\"");
+	switch (action)
+	{
+	case ACTION_1:
+		payload += String(",\"singleClick\":\"") + ActionToMessage(action) + String("\"");
+		break;
+	case ACTION_2:
+		payload += String(",\"doubleClick\":\"") + ActionToMessage(action) + String("\"");
+		break;
+	case ACTION_3:
+		payload += String(",\"tripleClick\":\"") + ActionToMessage(action) + String("\"");
+		break;
+	case ACTION_10:
+		payload += String(",\"longPress\":\"") + ActionToMessage(action) + String("\"");
+		break;
+	case ACTION_11:
+		payload += String(",\"superLongPress\":\"") + ActionToMessage(action) + String("\"");
+		break;
+	}
+	payload += String(",\"batteryVoltage\":") + String(ReButton::ReadPowerSupplyVoltage());
+	payload += String(",\"actionCount\":") + String(Config.ActionCount);
+	if (Config.CustomMessageEnable)
+	{
+		payload += stringformat(",%s", Config.CustomMessageJson);
+	}
+    payload += "}";
+
+	return payload;
+}
+
+static String MakeReportJsonString()
+{
+	JSON_Value* data = json_value_init_object();
+	if (strlen(Config.CustomMessagePropertyName) >= 1) json_object_set_boolean(json_object(data), Config.CustomMessagePropertyName, Config.CustomMessageEnable);
+	json_object_set_number(json_object(data), "actionCount", Config.ActionCount);
+	String jsonString = json_serialize_to_string(data);
+	json_value_free(data);
+
+	return jsonString;
+}
+
+static bool DeviceTwinReceived = false;
+
+static void DeviceTwinUpdateCallbackFunc(DEVICE_TWIN_UPDATE_STATE update_state, const unsigned char* payLoad, size_t size)
+{
+    Serial.println("DeviceTwinUpdateCallbackFunc()");
+
+	JSON_Value* root_value = json_parse_string((const char*)payLoad);
+	if (root_value == NULL)
+    {
+        Serial.println("failure calling json_parse_string");
+		return;
+    }
+    Serial.printf("%s\n", json_serialize_to_string(root_value));
+
+	JSON_Object* root_object = json_value_get_object(root_value);
+	int customMessageEnable;
+	if (strlen(Config.CustomMessagePropertyName) <= 0)
+	{
+		customMessageEnable = -1;
+	}
+	else
+	{
+		customMessageEnable = json_object_dotget_boolean(root_object, stringformat("desired.%s.value", Config.CustomMessagePropertyName).c_str());
+	}
+	int actionCount = json_object_dotget_number(root_object, "reported.actionCount");
+    json_value_free(root_value);
+
+    switch (customMessageEnable)
+    {
+    case 1:
+        Config.CustomMessageEnable = true;
+        break;
+    case 0:
+        Config.CustomMessageEnable = false;
+        break;
+    }
+
+	Config.ActionCount = actionCount;
+
+	DeviceTwinReceived = true;
+}
+
+bool ActionSendMessage(ACTION_TYPE action)
+{
+    Serial.println("ActionSendMessage() : Enter");
+
+	////////////////////
+	// Update auto shutdown
+
+	AutoShutdownUpdateStartTime();
+
+	ReButtonWiFiConnect();
+
+	platform_init();
+
+  	////////////////////
+  	// Initialize IoTHub client
+
+	ReButtonClient2 client;
+
+	if (strlen(Config.IoTHubConnectionString) >= 1)
+	{
+		Serial.printf("ActionConnectedSendMessage() : Connecting to IoT Hub.\n");
+		if (!client.ConnectIoTHub(Config.IoTHubConnectionString)) return false;
+	}
+	else if (strlen(Config.IoTHubConnectionString) <= 0 && strlen(Config.ScopeId) >= 1 && strlen(Config.DeviceId) >= 1 && strlen(Config.SasKey) >= 1)
+	{
+		Serial.println("ActionConnectedSendMessage() : Connecting to DPS/IoT Central.");
+
+		if (!client.ConnectIoTHubWithDPS(GLOBAL_DEVICE_ENDPOINT, Config.ScopeId, Config.DeviceId, Config.SasKey)) 
+		{
+			Serial.println("ActionConnectedSendMessage() : Connecting to DPS/IoT Central failed.");
+			return false;
+		}
+		else
+		{
+			Serial.println("ActionConnectedSendMessage() : Connected to IoT Hub.");
+		}
+	}
+	else
+	{
+		return false;
+	}
+
+    ////////////////////
+    // Make sure we are received Twin Update
+
+	Serial.println("ActionSendMessage() : Wait for DeviceTwin received.");
+	while (ReButton_Property_Pending_Flag != 0)
+    {
+		pnp_device_run();
+		delay(POLLING_INTERVAL);
+    }
+
+	////////////////////
+	// Send message
+
+	PushButtonInterface_Telemetry_SendAll();
+
+	////////////////////
+	// Disconnect IoTHub
+
+	pnp_device_close();
+
+    Serial.println("ActionSendMessage() : Complete");
+
+    return true;
+}

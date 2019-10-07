@@ -38,11 +38,11 @@ static void PushButtonInterface_TelemetryCallback(DIGITALTWIN_CLIENT_RESULT digi
 
     if (strcmp((const char*)userContextCallback, "actionNum") == 0)
     {
-        ReButton_Digital_Twin_Work_Flag &= ~ReButton_Telemetry_ActionNum; 
+        ReButton_Telemetry_Pending_Flag &= ~ReButton_Telemetry_ActionNum; 
     } 
     else if (strcmp((const char*)userContextCallback, "message") == 0)
     {
-        ReButton_Digital_Twin_Work_Flag &= ~ReButton_Telemetry_Message; 
+        ReButton_Telemetry_Pending_Flag &= ~ReButton_Telemetry_Message; 
     }
 }
 
@@ -97,6 +97,7 @@ DIGITALTWIN_CLIENT_RESULT PushButtonInterface_Telemetry_SendActionNum()
     char payloadBuffer[MAX_MASSAGE_SIZE];
     if (PushButton_SerializeActionNumTelemetry(payloadBuffer, MAX_MASSAGE_SIZE))
     {
+        ReButton_Telemetry_Pending_Flag |= ReButton_Telemetry_ActionNum;
         return PushButtonInterface_SendTelemetry_Internal(appState.interfaceClientHandle, PushButtonInterface_ActionNumTelemetry, payloadBuffer);
     }
     else
@@ -116,6 +117,7 @@ DIGITALTWIN_CLIENT_RESULT PushButtonInterface_Telemetry_SendMessage()
     char payloadBuffer[MAX_MASSAGE_SIZE];
     if (PushButton_SerializeMessageTelemetry(payloadBuffer, MAX_MASSAGE_SIZE))
     {
+        ReButton_Telemetry_Pending_Flag |= ReButton_Telemetry_Message;
         return PushButtonInterface_SendTelemetry_Internal(appState.interfaceClientHandle, PushButtonInterface_MessageTelemetry, payloadBuffer);
     }
     else

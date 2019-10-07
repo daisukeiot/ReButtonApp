@@ -1,12 +1,9 @@
 #include <Arduino.h>
+#include "../Common.h"
 #include "Config.h"
 
-#include "AutoShutdown.h"
 #include <ReButton.h>
 #include <AZ3166WiFi.h>
-
-const char* CONFIG_FIRMWARE_VERSION = "2.0-TempHumidSensor";
-static const char* SSID_PREFIX = "AZB-";
 
 CONFIG_TYPE Config;
 
@@ -23,12 +20,6 @@ static uint8_t CalcCheckSum(CONFIG_TYPE* config)
     memcpy(config->CheckSum, backup, sizeof(config->CheckSum));
 
     return checksum;
-}
-
-void strncpy_w_zero(char* dest, const char* src, int destSize)
-{
-	strncpy(dest, src, destSize - 1);
-	dest[destSize - 1] = '\0';
 }
 
 void ConfigResetFactorySettings()
@@ -59,6 +50,8 @@ void ConfigResetFactorySettings()
     Config.CustomMessageEnable = false;
     strncpy_w_zero(Config.CustomMessageJson, "\"custom1\":\"Custom1 message\","
 		                                     "\"custom2\":\"Custom2 message\"" , sizeof(Config.CustomMessageJson));
+
+    Config.ActionCount = 0;
 
     strncpy_w_zero(Config.WiFiSSID, "", sizeof(Config.WiFiSSID));
     strncpy_w_zero(Config.WiFiPassword, "", sizeof(Config.WiFiPassword));

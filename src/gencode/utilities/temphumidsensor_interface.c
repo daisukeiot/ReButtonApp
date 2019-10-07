@@ -38,11 +38,11 @@ static void TempHumidSensorInterface_TelemetryCallback(DIGITALTWIN_CLIENT_RESULT
 
     if (strcmp((const char*)userContextCallback, "temperature") == 0)
     {
-        ReButton_Digital_Twin_Work_Flag &= ~ReButton_Telemetry_temperature; 
+        ReButton_Property_Pending_Flag &= ~ReButton_Telemetry_temperature; 
     } 
     else if (strcmp((const char*)userContextCallback, "humidity") == 0)
     {
-        ReButton_Digital_Twin_Work_Flag &= ~ReButton_Telemetry_humidity; 
+        ReButton_Property_Pending_Flag &= ~ReButton_Telemetry_humidity; 
     }
 }
 

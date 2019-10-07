@@ -1,9 +1,8 @@
 #include <Arduino.h>
-#include "Config.h"
+#include "../Common.h"
 #include "ActionAccessPointCli.h"
 
-#include "AutoShutdown.h"
-#include "SystemWiFi.h"
+#include <SystemWiFi.h>
 
 struct console_command 
 {
@@ -140,7 +139,7 @@ static void wifi_pwd_Command(int argc, char **argv)
     char* pwd = NULL;
     if (argc == 1)
     {
-		pwd = "";
+        pwd = "";
     }
     else
     {

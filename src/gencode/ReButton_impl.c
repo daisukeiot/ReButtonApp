@@ -16,20 +16,75 @@
 #include "utilities/battery_interface.h"
 #include "utilities/pushbutton_interface.h"
 #include "utilities/temphumidsensor_interface.h"
+#include "../helper/RebuttonHelper.h"
 
 #define Payload_Buffer_Size 256
 
-// double TempHumidSensor_Telemetry_ReadTemperature()
-// {
-//     // TODO: provide implementation here
-//     return 0.0;
-// }
+volatile int ReButton_Property_Pending_Flag = 0;
+volatile int ReButton_Telemetry_Pending_Flag = 0;
 
-// double TempHumidSensor_Telemetry_ReadHumidity()
-// {
-//     // TODO: provide implementation here
-//     return 0.0;
-// }
+double Battery_Telemetry_ReadBatteryVoltage()
+{
+    double voltage = ReadBatteryVoltage();
+    LogInfo("Battery Voltage %02f", voltage);
+	return 3.0;
+}
+
+double TempHumidSensor_Telemetry_ReadTemperature()
+{
+	float temperature = GetTemperature();
+	LogInfo("Temperature %02f", temperature);
+	return temperature;
+}
+
+double TempHumidSensor_Telemetry_ReadHumidity()
+{
+	float humidity = GetHumidity();
+	LogInfo("Humidity %02f", humidity);
+	return humidity;
+}
+
+PUSHBUTTON_ACTIONNUM PushButton_Telemetry_ReadActionNum()
+{
+	LogInfo("PushButton_Telemetry_ReadActionNum =====================\r\n");
+	// switch (Action)
+	// {
+	// case ACTION_1:
+	// 	return PUSHBUTTON_ACTIONNUM_SingleClick;
+	// case ACTION_2:
+	// 	return PUSHBUTTON_ACTIONNUM_DoubleClick;
+	// case ACTION_3:
+	// 	return PUSHBUTTON_ACTIONNUM_TripleClick;
+	// case ACTION_10:
+	// 	return PUSHBUTTON_ACTIONNUM_LongPress;
+	// case ACTION_11:
+	// 	return PUSHBUTTON_ACTIONNUM_SuperLongPress;
+	// default:
+	// 	return PUSHBUTTON_ACTIONNUM_ERROR;
+	// }
+    return PUSHBUTTON_ACTIONNUM_SingleClick;
+}
+
+char* PushButton_Telemetry_ReadMessage()
+{
+	LogInfo("PushButton_Telemetry_ReadMessage =====================\r\n");
+	// switch (Action)
+	// {
+	// case ACTION_1:
+	// 	return Config.Message1;
+	// case ACTION_2:
+	// 	return Config.Message2;
+	// case ACTION_3:
+	// 	return Config.Message3;
+	// case ACTION_10:
+	// 	return Config.Message10;
+	// case ACTION_11:
+	// 	return Config.Message11;
+	// default:
+	// 	return "UNKNOWN";
+	// }
+    return "UNKNOWN";
+}
 
 void SendTelemetry_Succeeded_Callback(const char* interfaceName, const char* telemetryName)
 {
@@ -48,14 +103,12 @@ void SendTelemetry_Error_Callback(const char* interfaceName, const char* telemet
 void ReportProperty_Succeeded_Callback(const char* interfaceName, const char* propertyName)
 {
     // If needed, put your business logic here to handle the result callback reporting property on success.
-
     LogInfo("DigitalTwin successfully report writable property for %s::%s", interfaceName, propertyName);
 }
 
 void ReportProperty_Error_Callback(const char* interfaceName, const char* propertyName)
 {
     // If needed, put your business logic here to handle the result callback of reporting property on failure.
-
     LogInfo("DigitalTwin failed to report writable property for %s::%s", interfaceName, propertyName);
 }
 
@@ -71,7 +124,7 @@ char* DeviceInfo_Property_GetModel()
 
 char* DeviceInfo_Property_GetSwVersion()
 {
-    return "2.0-TempHumid";
+    return GetSwVersion();
 }
 
 char* DeviceInfo_Property_GetOsName()
@@ -86,7 +139,7 @@ char* DeviceInfo_Property_GetProcessorArchitecture()
 
 char* DeviceInfo_Property_GetProcessorManufacturer()
 {
-    return "MXCHIP";
+    return "MxChip";
 }
 
 long DeviceInfo_Property_GetTotalStorage()
@@ -99,6 +152,5 @@ long DeviceInfo_Property_GetTotalMemory()
     return 256 * 1024;
 }
 
-volatile int ReButton_Digital_Twin_Work_Flag;
 
 

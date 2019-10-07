@@ -1,8 +1,6 @@
 #pragma once
 
-#include "Display.h"
-
-extern const char* CONFIG_FIRMWARE_VERSION;
+#include "TypeAndFunc.h"
 
 #define CONFIG_AUTO_SHUTDOWN_TIMEOUT			(60000)		// [msec.]
 #define CONFIG_AUTO_SHUTDOWN_TIMEOUT_AP			(600000)	// [msec.]
@@ -41,6 +39,8 @@ struct CONFIG_TYPE
 	char CustomMessagePropertyName[CONFIG_PROPERTY_NAME_MAX_LEN + 1];
 	bool CustomMessageEnable;
 	char CustomMessageJson[CONFIG_CUSTOM_MESSAGE_JSON_MAX_LEN + 1];
+
+	int ActionCount;
 
 	char WiFiSSID[CONFIG_WIFI_SSID_MAX_LEN + 1];
 	char WiFiPassword[CONFIG_WIFI_PASSWORD_MAX_LEN + 1];

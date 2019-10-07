@@ -1,9 +1,14 @@
 #include <Arduino.h>
-#include <ReButton.h>
+#include "../Common.h"
 #include "ReButtonClient.h"
+#include "../gencode/pnp_device.h"
+#include "../helper/SasToken.h"
+
+#include <ReButton.h>
 #include <DevkitDPSClient.h>
 
-static const char* GLOBAL_DEVICE_ENDPOINT = "global.azure-devices-provisioning.net";
+static const int PROVISIONING_TRY_COUNT = 10;
+static const int PROVISIONING_TRY_INTERVAL = 1000;
 
 static void ConnectionStateCallbackFunc(IOTHUB_CLIENT_CONNECTION_STATUS result, IOTHUB_CLIENT_CONNECTION_STATUS_REASON reason, void* context)
 {
@@ -63,6 +68,7 @@ ReButtonClient::ReButtonClient()
 	_Connected = false;
 	_MessageSent = false;
 	_DeviceTwinReported = false;
+	_IsPnPEnabled = true;
 }
 
 ReButtonClient::~ReButtonClient()
@@ -97,12 +103,6 @@ bool ReButtonClient::Connect(DeviceTwinUpdateCallback callback)
 {
 	_DeviceTwinUpdateCallbackFunc = callback;
 
-	if (platform_init() != 0)
-	{
-		Serial.println("Failed to initialize the platform.");
-		return false;
-	}
-
 	String iotHubConnectionString;
 	if (strlen(Config.IoTHubConnectionString) >= 1)
 	{
@@ -112,16 +112,48 @@ bool ReButtonClient::Connect(DeviceTwinUpdateCallback callback)
 	{
 		Serial.println("Device provisioning...");
 
-		char uds[strlen(Config.SasKey) + 1];
-		strcpy(uds, Config.SasKey);
-
-		DevkitDPSSetLogTrace(false);
-		DevkitDPSSetAuthType(DPS_AUTH_SYMMETRIC_KEY);
-		if (!DevkitDPSClientStart(GLOBAL_DEVICE_ENDPOINT, Config.ScopeId, Config.DeviceId, uds, NULL, 0))
+		Serial.println("Generate SAS token");
+		char* deviceSasKeyPtr;
+		if (GenerateDeviceSasToken(Config.SasKey, Config.DeviceId, &deviceSasKeyPtr))
 		{
-			Serial.println("DPS client for GroupSAS has failed.");
+			Serial.println("ActionSendMessagePnP() : Generate SAS token failed");
 			return false;
 		}
+
+		String deviceSasKey(deviceSasKeyPtr);
+		free(deviceSasKeyPtr);
+
+		DevkitDPSSetLogTrace(true);
+		DevkitDPSSetAuthType(DPS_AUTH_SYMMETRIC_KEY);
+
+		customProvisioningData = CUSTOM_PROVISIONING_DATA;
+
+		for (int i = 0; ; i++)
+		{
+			Serial.printf("DevkitDPSClientStart %s %s %s %s\r\n", Config.ScopeId, Config.DeviceId, deviceSasKey.c_str(), customProvisioningData);
+			if (DevkitDPSClientStart(GLOBAL_DEVICE_ENDPOINT, Config.ScopeId, Config.DeviceId, (char*)deviceSasKey.c_str(), NULL, 0, customProvisioningData))
+			{
+				Serial.println("DevkitDPSClientStart Success.");
+				break;
+			}
+			else
+			{
+				Serial.println("DevkitDPSClientStart ERROR.");
+			}
+
+			if (i + 1 >= PROVISIONING_TRY_COUNT)
+			{
+				Serial.println("DPS client for GroupSAS has failed.");
+				return false;
+			}
+			else
+			{
+				Serial.println("Retrying provisioning.");
+			}
+			delay(PROVISIONING_TRY_INTERVAL);
+		}
+
+		Serial.println("DPS client success!!.");
 
 		iotHubConnectionString = "HostName=";
 		iotHubConnectionString += DevkitDPSGetIoTHubURI();
@@ -131,63 +163,16 @@ bool ReButtonClient::Connect(DeviceTwinUpdateCallback callback)
 		iotHubConnectionString += Config.SasKey;
 	}
 
-	_ClientHandle = IoTHubClient_LL_CreateFromConnectionString(iotHubConnectionString.c_str(), MQTT_Protocol);
-	if (_ClientHandle == NULL)
+	if (pnp_device_initialize(iotHubConnectionString.c_str(), certificates) == 0)
 	{
-		Serial.println("ERROR: iotHubClientHandle is NULL!");
+		Serial.println("ActionSendMessagePnP() : pnp_device_initialize Success");
+	}
+	else
+	{
+		Serial.println("ActionSendMessagePnP() : pnp_device_initialize Fail");
 		return false;
 	}
 
-	// set options
-	// https://github.com/Azure/azure-iot-sdk-c/blob/master/doc/Iothub_sdk_options.md
-
-	if (IoTHubClient_LL_SetOption(_ClientHandle, "TrustedCerts", certificates) != IOTHUB_CLIENT_OK)
-	{
-		Serial.println("Failed to set option \"TrustedCerts\"");
-		return false;
-	}
-
-	bool bLog = true;
-	if (IoTHubClient_LL_SetOption(_ClientHandle, "logtrace", &bLog) != IOTHUB_CLIENT_OK)
-	{
-		Serial.println("Failed to set option \"logtrace\"");
-		return false;
-	}
-
-	int connect_timeout = 30;
-	if (IoTHubClient_LL_SetOption(_ClientHandle, "connect_timeout", &connect_timeout) != IOTHUB_CLIENT_OK)
-	{
-		Serial.println("Failed to set option \"TrustedCerts\"");
-		return false;
-	}
-
-	int keepAlive = 10;
-	if (IoTHubClient_LL_SetOption(_ClientHandle, "keepalive", &keepAlive) != IOTHUB_CLIENT_OK)
-	{
-		Serial.println("Failed to set option \"keepalive\"");
-		return false;
-	}
-
-	if (IoTHubClient_LL_SetOption(_ClientHandle, "product_info", "ReButton") != IOTHUB_CLIENT_OK)
-	{
-		Serial.println("Failed to set option \"product_info\"");
-		return false;
-	}
-
-	// Connection status change callback
-	if (IoTHubClient_LL_SetConnectionStatusCallback(_ClientHandle, ConnectionStateCallbackFunc, this) != IOTHUB_CLIENT_OK)
-	{
-		Serial.println("IoTHubClient_LL_SetConnectionStatusCallback failed");
-		return false;
-	}
-
-	if (IoTHubClient_LL_SetDeviceTwinCallback(_ClientHandle, DeviceTwinCallbackFunc, this) != IOTHUB_CLIENT_OK)
-	{
-		Serial.printf("IoTHubClient_LL_SetDeviceTwinCallback failed");
-		return false;
-	}
-
-	Serial.println("InitializeIoTHubConnection() : Exit");
 	return true;
 }
 
@@ -225,7 +210,7 @@ bool ReButtonClient::SendMessageAsync(const char* payload)
 	//MAP_RESULT res = Map_AddOrUpdate(propMap, "timestamp", ctime(&now_utc));
 	//if (res != MAP_OK)
 	//{
-	//	Serial.println("Adding timestampe property failed");
+	//	Serial.println("Adding timestamp property failed");
 	//}
 
 	IoTHubMessage_SetContentEncodingSystemProperty(_MessageHandle, "utf-8");

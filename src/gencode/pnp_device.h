@@ -29,7 +29,7 @@ extern "C"
 #endif
 
 int pnp_device_initialize(const char* connectionString, const char* trustedCert);
-
+void pnp_device_run();
 void pnp_device_close();
 
 

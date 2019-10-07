@@ -40,35 +40,35 @@ static void DeviceInfoInterface_PropertyCallback(DIGITALTWIN_CLIENT_RESULT digit
 
     if (strcmp((const char*)userContextCallback, "manufacturer") == 0)
     {
-        ReButton_Digital_Twin_Work_Flag &= ~ReButton_Twin_manufacture; 
+        ReButton_Property_Pending_Flag &= ~ReButton_Property_manufacture; 
     } 
     else if (strcmp((const char*)userContextCallback, "model") == 0)
     {
-        ReButton_Digital_Twin_Work_Flag &= ~Rebutton_Twin_model; 
+        ReButton_Property_Pending_Flag &= ~ReButton_Property_model; 
     }
     else if (strcmp((const char*)userContextCallback, "swVersion") == 0)
     {
-        ReButton_Digital_Twin_Work_Flag &= ~ReButton_Twin_swVersion; 
+        ReButton_Property_Pending_Flag &= ~ReButton_Property_swVersion; 
     }
     else if (strcmp((const char*)userContextCallback, "osName") == 0)
     {
-        ReButton_Digital_Twin_Work_Flag &= ~ReButton_Twin_osName; 
+        ReButton_Property_Pending_Flag &= ~ReButton_Property_osName; 
     }
     else if (strcmp((const char*)userContextCallback, "processorArchitecture") == 0)
     {
-        ReButton_Digital_Twin_Work_Flag &= ~ReButton_Twin_processorArchitecture; 
+        ReButton_Property_Pending_Flag &= ~ReButton_Property_processorArchitecture; 
     }
     else if (strcmp((const char*)userContextCallback, "processorManufacturer") == 0)
     {
-        ReButton_Digital_Twin_Work_Flag &= ~ReButton_Twin_processorManufacturer; 
+        ReButton_Property_Pending_Flag &= ~ReButton_Property_processorManufacturer; 
     }
     else if (strcmp((const char*)userContextCallback, "totalStorage") == 0)
     {
-        ReButton_Digital_Twin_Work_Flag &= ~ReButton_Twin_totalStorage; 
+        ReButton_Property_Pending_Flag &= ~ReButton_Property_totalStorage; 
     }
     else if (strcmp((const char*)userContextCallback, "totalMemory") == 0)
     {
-        ReButton_Digital_Twin_Work_Flag &= ~ReButton_Twin_totalMemory; 
+        ReButton_Property_Pending_Flag &= ~ReButton_Property_totalMemory; 
     }
 }
 
