@@ -75,9 +75,9 @@ bool ActionConnectedSendMessage()
 			} else {
 				i++;
 			}
-			delay(POLLING_INTERVAL);
+			delay(POLLING_INTERVAL * 5);  // 500ms
 
-			if (i == 30)
+			if (i == 6)
 			{
 				DisplayStartFinish({ 0, 0, 0 });
 			}
@@ -130,6 +130,7 @@ bool ActionConnectedSendMessage()
 			INPUT_TYPE input = InputGetConfirmValue();
 			Serial.printf("Button is %s.\n", InputGetInputString(input));
 			PushButtonInterface_Telemetry_SendAll();
+
 			client.ReportedActionCount++;
 			DisplayStartActionConnected(isConnected ? COLOR_CONNECTED : COLOR_DISCONNECTED);
 		}

@@ -61,8 +61,10 @@ void setup()
 	ACTION_TYPE action = InputToAction(input);
 	Serial.printf("Action is %s.\n", ActionGetActionString(action));
 
-	if (!ActionTaskBlocking(action)) return;
-
+	if (!ActionTaskBlocking(action)) 
+	{
+		Serial.println("ActionTaskBlocking failed");
+	}
 	////////////////////
 	// FINISH
 
