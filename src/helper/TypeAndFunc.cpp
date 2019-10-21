@@ -2,7 +2,7 @@
 #include "../Common.h"
 #include "TypeAndFunc.h"
 
-const char* CONFIG_FIRMWARE_VERSION = "2.1";
+const char* CONFIG_FIRMWARE_VERSION = "2.1-Demo";
 
 const DISPLAY_COLOR_TYPE DISPLAY_OFF   = { 0  , 0  , 0 };	// OFF
 const DISPLAY_COLOR_TYPE DISPLAY_OK    = { 0  , 255, 0 };	// GREEN
