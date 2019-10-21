@@ -8,7 +8,7 @@
 #include <DevkitDPSClient.h>
 
 static const int PROVISIONING_TRY_COUNT = 10;
-static const int PROVISIONING_TRY_INTERVAL = 1000;
+static const int PROVISIONING_TRY_INTERVAL = 500;
 
 static void ConnectionStateCallbackFunc(IOTHUB_CLIENT_CONNECTION_STATUS result, IOTHUB_CLIENT_CONNECTION_STATUS_REASON reason, void* context)
 {

@@ -28,6 +28,7 @@ static const DISPLAY_COLOR_TYPE COLOR_CONNECTED    = { 255, 255, 255 };
 bool ActionConnectedSendMessage()
 {
     Serial.println("ActionConnectedSendMessage() : Enter");
+	DisplayStartActionDisconnected({ 255, 0, 255 });
 
 	////////////////////
 	// Set display
@@ -36,7 +37,11 @@ bool ActionConnectedSendMessage()
 #endif
 	bool isConnected = false;
 
-	ReButtonWiFiConnect();
+	if (!ReButtonWiFiConnect())
+	{
+		Serial.println("Failed to connect to WiFi");
+		return false;
+	}
 
 	platform_init();
 
@@ -60,14 +65,22 @@ bool ActionConnectedSendMessage()
 #ifdef IIADEMO
 		DisplayStartFinish({ 0, 255, 0 });
 		Serial.println("Wait for Button Click");
+		int i = 0;
 		while (ReButton::IsJumperShort())
 		{
 			if (ReButton::IsButtonPressed())
 			{
 				DisplayStartActionDisconnected(COLOR_DISCONNECTED);
 				break;
+			} else {
+				i++;
 			}
 			delay(POLLING_INTERVAL);
+
+			if (i == 30)
+			{
+				DisplayStartFinish({ 0, 0, 0 });
+			}
 		}
 
 #endif
